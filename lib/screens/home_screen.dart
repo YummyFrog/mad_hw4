@@ -1,10 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatelessWidget {
-  final List<String> boards = ['General', 'Tech Talk', 'Off Topic'];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final List<Map<String, dynamic>> boards = [
+    {'name': 'General Chat', 'icon': Icons.forum},
+    {'name': 'Tech Talk', 'icon': Icons.computer},
+    {'name': 'Random', 'icon': Icons.coffee},
+  ];
+
+  Future<void> ensureBoardsExist() async {
+    final batch = _firestore.batch();
+    for (var board in boards) {
+      final docRef = _firestore.collection('boards').doc(board['name']);
+      final doc = await docRef.get();
+      if (!doc.exists) {
+        batch.set(docRef, {'createdAt': FieldValue.serverTimestamp()});
+      }
+    }
+    await batch.commit();
+  }
 
   @override
   Widget build(BuildContext context) {
+    ensureBoardsExist(); // Create boards on first load (safe for dev)
+
     return Scaffold(
       appBar: AppBar(title: Text('Message Boards')),
       drawer: Drawer(
@@ -30,9 +53,13 @@ class HomeScreen extends StatelessWidget {
         itemCount: boards.length,
         itemBuilder: (context, index) {
           return ListTile(
-            leading: Icon(Icons.message),
-            title: Text(boards[index]),
-            onTap: () => Navigator.pushNamed(context, '/chat', arguments: boards[index]),
+            leading: Icon(boards[index]['icon']),
+            title: Text(boards[index]['name']),
+            onTap: () => Navigator.pushNamed(
+              context,
+              '/chat',
+              arguments: boards[index]['name'],
+            ),
           );
         },
       ),
