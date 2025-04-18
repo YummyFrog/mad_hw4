@@ -83,4 +83,5 @@ class DefaultFirebaseOptions {
     authDomain: 'mad-hw4-project6565.firebaseapp.com',
     storageBucket: 'mad-hw4-project6565.firebasestorage.app',
   );
+
 }
